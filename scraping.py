@@ -9,9 +9,8 @@ def Inner_Html(value):
 def Remove_Spaces(string):
     return string.replace(" ", "")
 
-# Method to Input Company Name/SIREN and generate URL
-def Search_String():
-    name = input("Please Enter Company Name/SIREN to search for the company:-")
+# Method to generate URL
+def Generate_Search_Url(name):
     searchUrl = "https://www.pappers.fr/recherche?q=" + name
     name = Remove_Spaces(name)
     if name.isnumeric() == True and len(name) == 9:
@@ -19,23 +18,9 @@ def Search_String():
     else:
         return False, searchUrl
 
-# Method to retrieve all the companies with Similar Name
-def Total_Companies(searchUrl):
+# Get details of company 
+def Get_Data(searchUrl):
     driver.get(searchUrl)
-    try:
-        numberOfCompanies = Inner_Html(
-            driver.find_element_by_css_selector('.color-entreprises'))
-    except:
-        try:
-            path = '/html/body/div[1]/div/div[3]/div[1]/div[1]/p[2]'
-            numberOfCompanies = Inner_Html(driver.find_element_by_xpath(path))
-        except:
-            numberOfCompanies = "Data Not Available"
-    numberOfCompanies = numberOfCompanies.split('<')[0]
-    return numberOfCompanies
-
-# Get details of company having SIREN number
-def Get_Data_Siren(searchUrl):
     company = {}
     try:
         company['NAME'] = Inner_Html(
@@ -51,27 +36,27 @@ def Get_Data_Siren(searchUrl):
             '/html/body/div[1]/div[3]/section[1]/div[2]/table/tbody/tr[3]/td'))
         company['CONTACT'] = Inner_Html(driver.find_element_by_xpath(
             '/html/body/div[1]/div[3]/section[3]/div/table/tbody/tr[1]/td/span')).strip()
-        url = company['NAME'].replace(" ","-") + '-' + Remove_Spaces(company['SIREN'])
+        url = company['NAME'].replace(
+            " ", "-") + '-' + Remove_Spaces(company['SIREN'])
         company['LINK'] = 'https://www.pappers.fr/entreprise/' + url
     except:
         return False, "Please try again. We are currently facing issue"
-    return True, [company]
+    return True, company
 
-# Get Details of company without SIREN
-def Get_Data():
-    allCompanies = []
+# Get list of companies matching search criteria
+def Get_Company_List(searchUrl):
+    companies = {}
     try:
+        driver.get(searchUrl)
         listCompanies = driver.find_elements_by_css_selector('.gros-nom')
     except:
         return False, "Please try again. We are currently facing issue"
     for i in listCompanies:
-        company = {}
-        company['NAME'] = Inner_Html(i).strip()
+        name = Inner_Html(i).strip()
         href = i.get_attribute('href')
-        company['LINK'] = href
-        company['SIREN'] = href.split('-')[-1]
-        allCompanies.append(company)
-    return True, allCompanies
+        companies[name] = href
+    return True, companies
+
 
 if __name__ == "__main__":
 
@@ -80,32 +65,33 @@ if __name__ == "__main__":
     options.headless = True
     driver = webdriver.Firefox(options=options)
 
-    isSiren, searchUrl = Search_String()
-    totalCompanies = Total_Companies(searchUrl)
+    # Input the Search String and Call Generate_Search_Url to get the search url
+    companyName = input(
+        "Please Enter Company/SIREN Name to search for the company:-").upper()
+    isSiren, searchUrl = Generate_Search_Url(companyName)
 
-    # Check if input is correct and we are getting any details
-    if totalCompanies == '0 entreprise':
-        print("Incorrect Details. Please make sure to enter correct details.")
-        driver.quit()
-        exit()
-    
+    # Check if the exact company is retrieved otherwise check for company in generated list
     if not isSiren:
-        if totalCompanies == 'Data Not Available':
-            print("Please try again. We are currently facing issue")
+        detailsRetrieved, allCompanies = Get_Company_List(searchUrl)
+        if not detailsRetrieved:
+            print(allCompanies)
             driver.quit()
             exit()
+        print(allCompanies.keys())
+        if companyName in allCompanies.keys():
+            searchDone, companyDetails = Get_Data(
+                allCompanies[companyName])
         else:
-            print("Total companies matching your search Criteria are", totalCompanies)
-            detailsRetrieved, details = Get_Data() 
-            print("Some of the companies which match your search criteria are:-\n")
+            searchDone, companyDetails = False, "Not able to find Company. Please try to search with SIREN"
     else:
-        detailsRetrieved, details = Get_Data_Siren(searchUrl)
+        searchDone, companyDetails = Get_Data(searchUrl)
+
+    if not searchDone:
+        print(companyDetails)
+    else:
         print("Details of Company are:-\n")
-    if not detailsRetrieved:
-        print(details)
-    else:
-        for company in details:
-            for key,value in company.items():
-                print(key,':',value)
-            print()
+        for key, value in companyDetails.items():
+            print(key, ':', value)
+        print()
+
     driver.quit()
