@@ -75,7 +75,7 @@ def Get_Data():
 
 if __name__ == "__main__":
 
-    # SET UP NETWORK PROXY
+    # Establish Connection
     options = webdriver.FirefoxOptions()
     options.headless = True
     driver = webdriver.Firefox(options=options)
@@ -83,11 +83,17 @@ if __name__ == "__main__":
     isSiren, searchUrl = Search_String()
     totalCompanies = Total_Companies(searchUrl)
 
+    # Check if input is correct and we are getting any details
     if totalCompanies == '0 entreprise':
         print("Incorrect Details. Please make sure to enter correct details.")
-    elif not isSiren:
+        driver.quit()
+        exit()
+    
+    if not isSiren:
         if totalCompanies == 'Data Not Available':
             print("Please try again. We are currently facing issue")
+            driver.quit()
+            exit()
         else:
             print("Total companies matching your search Criteria are", totalCompanies)
             detailsRetrieved, details = Get_Data() 
@@ -103,19 +109,3 @@ if __name__ == "__main__":
                 print(key,':',value)
             print()
     driver.quit()
-
-   # /html/body/div[1]/div/div[3]/div[2]/div[1]
-   # div.container-resultat:nth-child(1)
-
-   # RANDOM-LAB.IO
-   # <a data-v-0180e8d0="" href="/entreprise/random-holding-908680713" class="gros-nom" style="color: white;" data-x-bergamot-id="0">RANDOM HOLDING</a>
-   # html body.body-gris div#app div.page-recherche.body div.min-height-100vh div div.container-resultat div.nom-entreprise a.gros-nom
-   # html body.body-gris div#app div.page-recherche.body div.min-height-100vh div div.container-resultat div.nom-entreprise a.gros-nom
-
-   # div.container-resultat:nth-child(1) > div:nth-child(2) > a:nth-child(1)
-   # div.container-resultat:nth-child(3) > div:nth-child(2) > a:nth-child(1)
-
-   # /html/body/div[1]/div/div[3]/div[2]/div[1]/div[1]/a
-   # /html/body/div[1]/div/div[3]/div[2]/div[2]/div[1]/a
-   # /html/body/div[1]/div/div[3]/div[2]/div[3]/div[1]/a
-   # /html/body/div[1]/div/div[3]/div[2]/div[1]/div[1]/a
