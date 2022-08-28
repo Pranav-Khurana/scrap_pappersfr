@@ -1,9 +1,8 @@
-import pandas as pd
 from selenium import webdriver
 
 # Method to get innerHTML
-def Inner_Html(value):
-    return value.get_attribute('innerHTML')
+def Inner_Text(value):
+    return value.get_attribute('innerText')
 
 # Method to remove spaces
 def Remove_Spaces(string):
@@ -23,18 +22,18 @@ def Get_Data(searchUrl):
     driver.get(searchUrl)
     company = {}
     try:
-        company['NAME'] = Inner_Html(
+        company['NAME'] = Inner_Text(
             driver.find_element_by_css_selector('.big-text')).strip()
-        company['SIREN'] = Inner_Html(
+        company['SIREN'] = Inner_Text(
             driver.find_element_by_css_selector('.siren'))
         otherData = driver.find_elements_by_xpath(
             '/html/body/div[1]/div[2]/div[2]/table/tbody/tr/td')
-        company['ADDRESS'] = Inner_Html(otherData[0])
-        company['ACTIVITY'] = Inner_Html(otherData[1])
-        company['SINCE'] = Inner_Html(otherData[3])
-        company['LEGAL FORM'] = Inner_Html(driver.find_element_by_xpath(
+        company['ADDRESS'] = Inner_Text(otherData[0])
+        company['ACTIVITY'] = Inner_Text(otherData[1])
+        company['SINCE'] = Inner_Text(otherData[3])
+        company['LEGAL FORM'] = Inner_Text(driver.find_element_by_xpath(
             '/html/body/div[1]/div[3]/section[1]/div[2]/table/tbody/tr[3]/td'))
-        company['CONTACT'] = Inner_Html(driver.find_element_by_xpath(
+        company['CONTACT'] = Inner_Text(driver.find_element_by_xpath(
             '/html/body/div[1]/div[3]/section[3]/div/table/tbody/tr[1]/td/span')).strip()
         url = company['NAME'].replace(
             " ", "-") + '-' + Remove_Spaces(company['SIREN'])
@@ -52,7 +51,7 @@ def Get_Company_List(searchUrl):
     except:
         return False, "Please try again. We are currently facing issue"
     for i in listCompanies:
-        name = Inner_Html(i).strip()
+        name = Inner_Text(i).strip()
         href = i.get_attribute('href')
         companies[name] = href
     return True, companies
